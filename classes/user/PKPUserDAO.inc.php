@@ -18,8 +18,9 @@ import('lib.pkp.classes.user.PKPUser');
 
 /* These constants are used user-selectable search fields. */
 define('USER_FIELD_USERID', 'user_id');
-define('USER_FIELD_FIRSTNAME', 'first_name');
-define('USER_FIELD_LASTNAME', 'last_name');
+define('USER_FIELD_FIRSTNAME', 'firstName');
+define('USER_FIELD_MIDDLENAME', 'middleName');
+define('USER_FIELD_LASTNAME', 'lastName');
 define('USER_FIELD_USERNAME', 'username');
 define('USER_FIELD_EMAIL', 'email');
 define('USER_FIELD_URL', 'url');
@@ -174,12 +175,16 @@ class PKPUserDAO extends DAO {
 			LEFT JOIN user_user_groups uug ON (uug.user_id = u.user_id)
 			LEFT JOIN user_groups ug ON (ug.user_group_id = uug.user_group_id)
 			LEFT JOIN review_assignments r ON (r.reviewer_id = u.user_id)
+			LEFT JOIN user_settings usf ON (usf.user_id = u.user_id AND usf.setting_name = ? AND usf.locale = ?)
+			LEFT JOIN user_settings usl ON (usl.user_id = u.user_id AND usl.setting_name = ? AND usl.locale = ?)
 			WHERE	ug.context_id = ? AND
 			ug.role_id = ? AND
 			r.submission_id = ? AND
 			r.round = ?
-			ORDER BY last_name, first_name',
+			ORDER BY usl.setting_value, usf.setting_value',
 			array(
+				USER_FIELD_FIRSTNAME, AppLocale::getLocale(),
+				USER_FIELD_LASTNAME, AppLocale::getLocale(),
 				(int) $contextId,
 				ROLE_ID_REVIEWER,
 				(int) $submissionId,
@@ -200,8 +205,12 @@ class PKPUserDAO extends DAO {
 	 */
 	function getReviewersNotAssignedToSubmission($contextId, $submissionId, &$reviewRound, $name = '') {
 		$reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-
-		$params = array((int) $contextId, ROLE_ID_REVIEWER, (int) $reviewRound->getStageId(), (int) $submissionId, (int) $reviewRound->getId());
+		$params = array((int) $contextId, ROLE_ID_REVIEWER, 
+			(int) $reviewRound->getStageId(), 
+			USER_FIELD_FIRSTNAME, AppLocale::getLocale(),
+			USER_FIELD_LASTNAME, AppLocale::getLocale(),
+			(int) $submissionId, 
+			(int) $reviewRound->getId());
 		if (!empty($name)) $params[] = $params[] = $params[] = $params[] = "%$name%";
 
 		$result = $this->retrieve(
@@ -210,11 +219,13 @@ class PKPUserDAO extends DAO {
 			JOIN user_user_groups uug ON (uug.user_id = u.user_id)
 			JOIN user_groups ug ON (ug.user_group_id = uug.user_group_id AND ug.context_id = ? AND ug.role_id = ?)
 			JOIN user_group_stage ugs ON (ugs.user_group_id = ug.user_group_id AND ugs.stage_id = ?)
+			LEFT JOIN user_settings usf ON (usf.user_id = u.user_id AND usf.setting_name = ? AND usf.locale = ?)
+                        LEFT JOIN user_settings usl ON (usl.user_id = u.user_id AND usl.setting_name = ? AND usl.locale = ?)
 			WHERE 0=(SELECT COUNT(r.reviewer_id)
 			FROM review_assignments r
 			WHERE r.submission_id = ? AND r.reviewer_id = u.user_id AND r.review_round_id = ?)' .
-			(!empty($name)?' AND (first_name LIKE ? OR last_name LIKE ? OR username LIKE ? OR email LIKE ?)':'') .
-			' ORDER BY last_name, first_name',
+			(!empty($name)?' AND (usf.setting_value LIKE ? OR usl.setting_value LIKE ? OR username LIKE ? OR email LIKE ?)':'') .
+			' ORDER BY usl.setting_value, usf.setting_value',
 			$params
 		);
 
@@ -232,10 +243,15 @@ class PKPUserDAO extends DAO {
 			FROM	users u
 			LEFT JOIN user_user_groups uug ON (uug.user_id = u.user_id)
 			LEFT JOIN user_groups ug ON (ug.user_group_id = uug.user_group_id)
+			LEFT JOIN user_settings usf ON (usf.user_id = u.user_id AND usf.setting_name = ? AND usf.locale = ?)
+                        LEFT JOIN user_settings usl ON (usl.user_id = u.user_id AND usl.setting_name = ? AND usl.locale = ?)
 			WHERE	ug.context_id = ? AND
 			ug.role_id = ?
-			ORDER BY last_name, first_name',
-			array((int) $contextId, ROLE_ID_REVIEWER)
+			ORDER BY usl.setting_value, usf.setting_value',
+			array(  USER_FIELD_FIRSTNAME, AppLocale::getLocale(),
+				USER_FIELD_LASTNAME, AppLocale::getLocale(),
+				(int) $contextId, 
+				ROLE_ID_REVIEWER)
 		);
 
 		return new DAOResultFactory($result, $this, '_returnUserFromRowWithData');
@@ -292,10 +308,6 @@ class PKPUserDAO extends DAO {
 		$user->setUsername($row['username']);
 		$user->setPassword($row['password']);
 		$user->setSalutation($row['salutation']);
-		$user->setFirstName($row['first_name']);
-		$user->setMiddleName($row['middle_name']);
-		$user->setInitials($row['initials']);
-		$user->setLastName($row['last_name']);
 		$user->setSuffix($row['suffix']);
 		$user->setEmail($row['email']);
 		$user->setUrl($row['url']);
@@ -334,18 +346,15 @@ class PKPUserDAO extends DAO {
 		}
 		$this->update(
 			sprintf('INSERT INTO users
-				(username, password, salutation, first_name, middle_name, initials, last_name, suffix, email, url, phone, mailing_address, billing_address, country, locales, date_last_email, date_registered, date_validated, date_last_login, must_change_password, disabled, disabled_reason, auth_id, auth_str, inline_help, gossip)
+				(username, password, salutation, initials, suffix, gender, email, url, phone, mailing_address, billing_address, country, locales, date_last_email, date_registered, date_validated, date_last_login, must_change_password, disabled, disabled_reason, auth_id, auth_str, inline_help, gossip)
 				VALUES
-				(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, %s, %s, %s, %s, ?, ?, ?, ?, ?, ?, ?)',
+				(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, %s, %s, %s, %s, ?, ?, ?, ?, ?, ?, ?)',
 				$this->datetimeToDB($user->getDateLastEmail()), $this->datetimeToDB($user->getDateRegistered()), $this->datetimeToDB($user->getDateValidated()), $this->datetimeToDB($user->getDateLastLogin())),
 			array(
 				$user->getUsername(),
 				$user->getPassword(),
 				$user->getSalutation(),
-				$user->getFirstName(),
-				$user->getMiddleName(),
 				$user->getInitials(),
-				$user->getLastName(),
 				$user->getSuffix(),
 				$user->getEmail(),
 				$user->getUrl(),
@@ -373,7 +382,7 @@ class PKPUserDAO extends DAO {
 	 * @copydoc DAO::getLocaleFieldNames
 	 */
 	function getLocaleFieldNames() {
-		return array('biography', 'signature', 'affiliation');
+		return array('biography', 'signature', 'affiliation', USER_FIELD_FIRSTNAME, USER_FIELD_LASTNAME, USER_FIELD_MIDDLENAME);
 	}
 
 	/**
@@ -412,10 +421,6 @@ class PKPUserDAO extends DAO {
 				SET	username = ?,
 					password = ?,
 					salutation = ?,
-					first_name = ?,
-					middle_name = ?,
-					initials = ?,
-					last_name = ?,
 					suffix = ?,
 					email = ?,
 					url = ?,
@@ -440,10 +445,6 @@ class PKPUserDAO extends DAO {
 				$user->getUsername(),
 				$user->getPassword(),
 				$user->getSalutation(),
-				$user->getFirstName(),
-				$user->getMiddleName(),
-				$user->getInitials(),
-				$user->getLastName(),
 				$user->getSuffix(),
 				$user->getEmail(),
 				$user->getUrl(),
@@ -489,8 +490,17 @@ class PKPUserDAO extends DAO {
 	 */
 	function getUserFullName($userId, $allowDisabled = true) {
 		$result = $this->retrieve(
-			'SELECT first_name, middle_name, last_name, suffix FROM users WHERE user_id = ?' . ($allowDisabled?'':' AND disabled = 0'),
-			array((int) $userId)
+			'SELECT usf.setting_value, usm.setting_value, usl.setting_value, u.suffix 
+			FROM users u
+			LEFT JOIN user_settings usf ON (usf.user_id = u.user_id AND usf.setting_name = ? AND usf.locale = ? )
+			LEFT JOIN user_settings usm ON (usm.user_id = u.user_id AND usm.setting_name = ? AND usm.locale = ? )
+			LEFT JOIN user_settings usl ON (usl.user_id = u.user_id AND usl.setting_name = ? AND usl.locale = ?)
+			WHERE u.user_id = ?' . ($allowDisabled?'':' AND disabled = 0'),
+			
+			array(  USER_FIELD_FIRSTNAME, AppLocale::getLocale(),
+				USER_FIELD_MIDDLENAME, AppLocale::getLocale(),
+				USER_FIELD_LASTNAME, AppLocale::getLocale(),
+				(int) $userId)
 		);
 
 		if($result->RecordCount() == 0) {
@@ -546,7 +556,8 @@ class PKPUserDAO extends DAO {
 				$var = $match == 'is' ? $value : "%$value%";
 				break;
 			case USER_FIELD_INITIAL:
-				$sql .= ' WHERE LOWER(u.last_name) LIKE LOWER(?)';
+				$sql .= 'LEFT JOIN user_settings usl ON (usl.user_id = u.user_id AND usl.setting_name = \'' . USER_FIELD_LASTNAME . '\' AND usl.locale = \'' . AppLocale::getLocale() . '\')
+					 WHERE LOWER(usl.setting_value) LIKE LOWER(?)';
 				$var = "$value%";
 				break;
 			case USER_FIELD_INTERESTS:
@@ -566,11 +577,13 @@ class PKPUserDAO extends DAO {
 				$var = $match == 'is' ? $value : "%$value%";
 				break;
 			case USER_FIELD_FIRSTNAME:
-				$sql .= ' WHERE LOWER(u.first_name) ' . ($match == 'is' ? '=' : 'LIKE') . ' LOWER(?)';
+				$sql .= 'LEFT JOIN user_settings usf ON (usf.user_id = u.user_id AND usf.setting_name = \'' . USER_FIELD_FIRSTNAME . '\' AND usf.locale = \'' . AppLocale::getLocale() . '\')
+					 WHERE LOWER(usf.setting_value) ' . ($match == 'is' ? '=' : 'LIKE') . ' LOWER(?)';
 				$var = $match == 'is' ? $value : "%$value%";
 				break;
 			case USER_FIELD_LASTNAME:
-				$sql .= ' WHERE LOWER(u.last_name) ' . ($match == 'is' ? '=' : 'LIKE') . ' LOWER(?)';
+				$sql .= 'LEFT JOIN user_settings usl ON (usl.user_id = u.user_id AND usl.setting_name = \'' . USER_FIELD_LASTNAME . '\' AND usl.locale = \'' . AppLocale::getLocale() . '\')
+					 WHERE LOWER(usl.setting_value) ' . ($match == 'is' ? '=' : 'LIKE') . ' LOWER(?)';
 				$var = $match == 'is' ? $value : "%$value%";
 				break;
 		}
@@ -590,10 +603,15 @@ class PKPUserDAO extends DAO {
 	 * @return DAOResultFactory
 	 */
 	function getUsersWithNoRole($allowDisabled = true, $dbResultRange = null) {
-		$sql = 'SELECT u.* FROM users u LEFT JOIN roles r ON u.user_id=r.user_id WHERE r.role_id IS NULL';
+		$sql = 'SELECT u.* FROM users u 
+			LEFT JOIN user_settings usf ON (usf.user_id = u.user_id AND usf.setting_name = ? AND usf.locale = ? )
+                        LEFT JOIN user_settings usl ON (usl.user_id = u.user_id AND usl.setting_name = ? AND usl.locale = ?)
+			LEFT JOIN roles r ON u.user_id=r.user_id 
+			WHERE r.role_id IS NULL';
 
-		$orderSql = ' ORDER BY u.last_name, u.first_name'; // FIXME Add "sort field" parameter?
-
+		$orderSql = ' ORDER BY usl.setting_value, usf.setting_value'; // FIXME Add "sort field" parameter?
+		$params = array(USER_FIELD_FIRSTNAME, AppLocale::getLocale(),
+                                USER_FIELD_LASTNAME, AppLocale::getLocale());
 		$result = $this->retrieveRange($sql . ($allowDisabled?'':' AND u.disabled = 0') . $orderSql, false, $dbResultRange);
 
 		return new DAOResultFactory($result, $this, '_returnUserFromRowWithData');

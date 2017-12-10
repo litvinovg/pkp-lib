@@ -72,7 +72,7 @@
 		{/if}
 		{if $citationsEnabled && !$metadataModal}
 			{fbvFormSection label="submission.citations"}
-				{fbvElement type="textarea" id="citations" value=$citations multilingual=false disabled=$readOnly required=$citationsRequired}
+				{fbvElement type="textarea" id="citations" multilingual=true value=$citations disabled=$readOnly required=$citationsRequired}
 			{/fbvFormSection}
 		{/if}
 	{/fbvFormArea}

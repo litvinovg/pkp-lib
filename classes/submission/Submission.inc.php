@@ -32,6 +32,8 @@ define ('PERMISSIONS_FIELD_LICENSE_URL', 1);
 define ('PERMISSIONS_FIELD_COPYRIGHT_HOLDER', 2);
 define ('PERMISSIONS_FIELD_COPYRIGHT_YEAR', 3);
 
+define('SUBMISSION_SETTING_CITATIONS', 'citations');
+
 abstract class Submission extends DataObject {
 	/**
 	 * Constructor.
@@ -749,18 +751,28 @@ abstract class Submission extends DataObject {
 
 	/**
 	 * Get citations.
+	 * @param $locale string
 	 * @return string
 	 */
-	function getCitations() {
-		return $this->getData('citations');
+	function getCitations($locale) {
+		return $this->getData(SUBMISSION_SETTING_CITATIONS, $locale);
+	}
+	
+	/**
+	 * Get localized citations.
+	 * @return string
+	 */
+	function getLocalizedCitations() {
+		return $this->getLocalizedData(SUBMISSION_SETTING_CITATIONS);
 	}
 
 	/**
 	 * Set citations.
 	 * @param $citations string
+	 * @param $locale string
 	 */
-	function setCitations($citations) {
-		$this->setData('citations', $citations);
+	function setCitations($citations,$locale) {
+		$this->setData(SUBMISSION_SETTING_CITATIONS, $citations, $locale);
 	}
 
 	/**

@@ -277,18 +277,18 @@ abstract class PKPSubmissionListQueryBuilder extends BaseQueryBuilder {
 			if (count($words)) {
 				$q->leftJoin('submission_settings as ss','s.submission_id','=','ss.submission_id')
 					->leftJoin('authors as au','s.submission_id','=','au.submission_id')
-						->leftJoin('author_settings as asf',function($table) use ($assigneeId) {
-							$table->on('au.author_id', '=', 'asf.author_id');
-							$table->on('asf.setting_name', '=', IDENTITY_SETTING_FIRSTNAME );
-							$table->on('asf.locale', '=', AppLocale::getLocale() );
-					})	->leftJoin('author_settings as asm',function($table) use ($assigneeId) {
-							$table->on('au.author_id', '=', 'asm.author_id');
-							$table->on('asm.setting_name', '=', IDENTITY_SETTING_MIDDLENAME );
-							$table->on('asm.locale', '=', AppLocale::getLocale() );
-					})	->leftJoin('author_settings as asl',function($table) use ($assigneeId) {
-							$table->on('au.author_id', '=', 'asl.author_id');
-							$table->on('asl.setting_name', '=', IDENTITY_SETTING_LASTNAME );
-							$table->on('asl.locale', '=', AppLocale::getLocale() );
+						->leftJoin('author_settings as asf',function($join) {
+							$join->on('au.author_id', '=', 'asf.author_id');
+							$join->on('asf.setting_name', '=', Capsule::raw('\''.IDENTITY_SETTING_FIRSTNAME.'\'') );
+							$join->on('asf.locale', '=', Capsule::raw('\''.$this->getLocale().'\'') );
+					})	->leftJoin('author_settings as asm',function($join2) {
+							$join2->on('au.author_id', '=', 'asm.author_id');
+							$join2->on('asm.setting_name', '=', Capsule::raw('\''.IDENTITY_SETTING_MIDDLENAME.'\''));
+							$join2->on('asm.locale', '=', Capsule::raw('\''.$this->getLocale().'\'') );
+					})	->leftJoin('author_settings as asl',function($join3) {
+							$join3->on('au.author_id', '=', 'asl.author_id');
+							$join3->on('asl.setting_name', '=', Capsule::raw('\''.IDENTITY_SETTING_LASTNAME.'\'') );
+							$join3->on('asl.locale', '=', Capsule::raw('\''.$this->getLocale().'\'') );
 					});
 
 				foreach ($words as $word) {
@@ -327,6 +327,9 @@ abstract class PKPSubmissionListQueryBuilder extends BaseQueryBuilder {
 		}
 
 		return $q;
+	}
+	function getLocale(){
+	return \AppLocale::getLocale();
 	}
 
 	/**

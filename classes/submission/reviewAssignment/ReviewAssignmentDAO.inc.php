@@ -486,7 +486,6 @@ class ReviewAssignmentDAO extends DAO {
 		$reviewAssignment->setId($row['review_id']);
 		$reviewAssignment->setSubmissionId($row['submission_id']);
 		$reviewAssignment->setReviewerId($row['reviewer_id']);
-		$reviewAssignment->setReviewerFullName($row['first_name'].' '.$row['last_name']);
 		$reviewAssignment->setCompetingInterests($row['competing_interests']);
 		$reviewAssignment->setRecommendation($row['recommendation']);
 		$reviewAssignment->setDateAssigned($this->datetimeFromDB($row['date_assigned']));

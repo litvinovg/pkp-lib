@@ -105,7 +105,15 @@ class Identity extends DataObject {
 	function getInitials() {
 		$initials = $this->getData('initials');
 		if (!$initials) {
-			$initials = PKPString::substr($this->getLocalizedFirstName(), 0, 1) . PKPString::substr($this->getLocalizedLastName(), 0, 1);
+		    $firstName = $this->getLocalizedFirstName();
+			$initials = "";
+			if ($firstName) {
+				$initials = PKPString::substr($firstName, 0, 1);
+			}	
+			$lastName = $this->getLocalizedLastName();
+			if ($lastName) {
+				$initials = $initials . PKPString::substr($lastName, 0, 1);
+			}
 		}
 		return $initials;
 	}

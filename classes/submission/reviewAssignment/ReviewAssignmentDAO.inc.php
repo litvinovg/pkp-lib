@@ -494,7 +494,7 @@ class ReviewAssignmentDAO extends DAO {
 	 */
 	function _fromRow($row) {
 		$reviewAssignment = $this->newDataObject();
-
+		$reviewAssignment->setReviewerFullName($row[strtolower(IDENTITY_SETTING_FIRSTNAME)]. " ". $row[strtolower(IDENTITY_SETTING_LASTNAME)]);
 		$reviewAssignment->setId($row['review_id']);
 		$reviewAssignment->setSubmissionId($row['submission_id']);
 		$reviewAssignment->setReviewerId($row['reviewer_id']);
@@ -637,7 +637,7 @@ class ReviewAssignmentDAO extends DAO {
 	 * @return string
 	 */
 	function _getSelectQuery() {
-		return 'SELECT r.*, r2.review_revision, usf.setting_value, usl.setting_value FROM review_assignments r
+		return 'SELECT r.*, r2.review_revision, usf.setting_value AS \'' . IDENTITY_SETTING_FIRSTNAME . '\', usl.setting_value AS \'' . IDENTITY_SETTING_LASTNAME . '\' FROM review_assignments r
 		LEFT JOIN users u ON (r.reviewer_id = u.user_id)
 		LEFT JOIN user_settings usf ON (usf.user_id = u.user_id AND usf.setting_name = \'' . IDENTITY_SETTING_FIRSTNAME . '\' AND usf.locale = \'' . AppLocale::getLocale() . '\')
 		LEFT JOIN user_settings usl ON (usl.user_id = u.user_id AND usl.setting_name = \'' . IDENTITY_SETTING_LASTNAME . '\' AND usl.locale = \'' . AppLocale::getLocale() . '\')

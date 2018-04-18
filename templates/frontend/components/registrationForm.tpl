@@ -30,7 +30,12 @@
 						{translate key="common.required"}
 					</span>
 				</span>
-				<input type="text" name="firstName[{$primaryLocale|escape}]" id="firstName" value="{$firstName.$primaryLocale|escape}" maxlength="40" required>
+				{foreach from=$languageToggleLocales key=localeKey item=localeName}
+					<span class="label">
+						{$localeName}
+					</span>
+					<input type="text" name="firstName[{$localeKey|escape}]" id="firstName" value="{$firstName[$localeKey]|escape}" maxlength="40" required>
+				{/foreach}
 			</label>
 		</div>
 		<div class="middle_name">
@@ -38,7 +43,13 @@
 				<span class="label">
 					{translate key="user.middleName"}
 				</span>
-				<input type="text" name="middleName[{$primaryLocale|escape}]" value="{$middleName.$primaryLocale|escape}" maxlength="40">
+					
+				{foreach from=$languageToggleLocales key=localeKey item=localeName}
+					<span class="label">
+		                {$localeName}
+	                </span>
+					<input type="text" name="middleName[{$localeKey|escape}]" id="middleName" value="{$middleName[$localeKey]|escape}" maxlength="40" >
+				{/foreach}
 			</label>
 		</div>
 		<div class="last_name">
@@ -50,7 +61,12 @@
 						{translate key="common.required"}
 					</span>
 				</span>
-				<input type="text" name="lastName[{$primaryLocale|escape}]" id="lastName" value="{$lastName.$primaryLocale|escape}" maxlength="40" required>
+				{foreach from=$languageToggleLocales key=localeKey item=localeName}
+					<span class="label">
+		                {$localeName}
+	                </span>
+					<input type="text" name="lastName[{$localeKey|escape}]" id="lastName" value="{$lastName[$localeKey]|escape}" maxlength="40" required>
+				{/foreach}
 			</label>
 		</div>
 		<div class="affiliation">

@@ -100,7 +100,10 @@ class RegistrationForm extends Form {
 
 		$site = $request->getSite();
 		$templateMgr->assign('availableLocales', $site->getSupportedLocaleNames());
-
+		$journal = $request->getJournal();
+		if (isset($journal)) {
+			$templateMgr->assign('languageToggleLocales', $journal->getSupportedLocaleNames());
+		}
 		import('lib.pkp.classes.user.form.UserFormHelper');
 		$userFormHelper = new UserFormHelper();
 		$userFormHelper->assignRoleContent($templateMgr, $request);

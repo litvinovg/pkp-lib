@@ -27,7 +27,7 @@
 	{csrf}
 
 	{fbvFormSection label="submission.citations" description="submission.citations.description"}
-		{fbvElement type="textarea" id="citations" value=$citations disabled=$readOnly required=$citationsRequired}
+		{fbvElement type="textarea" id="citations" value=$citations multilingual="true" disabled=$readOnly required=$citationsRequired}
 	{/fbvFormSection}
 
 	{if $parsedCitations->getCount()}

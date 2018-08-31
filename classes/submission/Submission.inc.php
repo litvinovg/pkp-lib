@@ -312,7 +312,7 @@ abstract class Submission extends DataObject {
 		}
 		if (!$firstAuthor) return '';
 
-		$authorString = $firstAuthor->getLastName();
+		$authorString = $firstAuthor->getLocalizedLastName();
 		AppLocale::requireComponents(LOCALE_COMPONENT_PKP_SUBMISSION);
 		if (count($authors) > 1) $authorString = __('submission.shortAuthor', array('author' => $authorString));
 		return $authorString;

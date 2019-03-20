@@ -103,7 +103,7 @@ class PKPSubmissionMetadataFormImplementation {
 				'type' => $submission->getType(null), // Localized
 				'source' =>$submission->getSource(null), // Localized
 				'rights' => $submission->getRights(null), // Localized
-				'citations' => $submission->getCitations(),
+				'citations' => $submission->getCitations(null),
 				'locale' => $submission->getLocale(),
 			);
 
@@ -176,7 +176,7 @@ class PKPSubmissionMetadataFormImplementation {
 		$submission->setSource($this->_parentForm->getData('source'), null); // Localized
 		$metadataModal = $this->_parentForm->getData('metadataModal');
 		if (!$metadataModal) {
-			$submission->setCitations($this->_parentForm->getData('citations'));
+			$submission->setCitations($this->_parentForm->getData('citations'),null);
 		}
 
 		// Update submission locale

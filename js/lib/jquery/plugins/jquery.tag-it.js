@@ -241,7 +241,7 @@
                     // Tab will also create a tag, unless the tag input is empty,
                     // in which case it isn't caught.
                     if (
-                        (event.key === ',' && event.shiftKey === false) ||
+                        (event.key === ',') ||
                         event.which === $.ui.keyCode.ENTER ||
                         (
                             event.which == $.ui.keyCode.TAB &&
@@ -435,8 +435,16 @@
         _effectExists: function(name) {
             return Boolean($.effects && ($.effects[name] || ($.effects.effect && $.effects.effect[name])));
         },
-
         createTag: function(value, additionalClass, duringInitialization) {
+            var that = this;
+            var inputs = value.split(",");
+            for (var i = 0, len = inputs.length; i < len; i++) {
+                that.createOneTag(inputs[i],additionalClass, duringInitialization);
+            }
+
+        },
+
+        createOneTag: function(value, additionalClass, duringInitialization) {
             var that = this;
 
             value = $.trim(value);
